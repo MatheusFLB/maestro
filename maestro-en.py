@@ -2,7 +2,7 @@
 """
 Automatic File Organizer
 
-Traverses a root directory, classifies files by type and year/extension,
+Walks through a root directory, classifies files by type and year/extension,
 and organizes them into a destination directory.
 
 Requirements:
@@ -17,6 +17,7 @@ from tqdm import tqdm
 from datetime import datetime
 import argparse
 import csv
+import time
 
 # ----------------------------
 # CATEGORY CONFIGURATION
@@ -26,12 +27,12 @@ CATEGORIES = {
     "Videos": [".mp4", ".mov", ".avi", ".mkv", ".flv", ".wmv", ".webm", ".mpeg", ".mpg", ".3gp", ".m4v", ".vob"],
     "Music": [".mp3", ".flac", ".wav", ".aac", ".ogg", ".wma", ".m4a", ".alac", ".aiff", ".opus"],
     "Documents": [".pdf", ".docx", ".doc", ".xlsx", ".xls", ".pptx", ".ppt", ".txt", ".odt", ".ods", ".odp", ".rtf", ".tex", ".csv", ".md", ".log"],
-    "Compressed": [".zip", ".rar", ".7z", ".tar", ".gz", ".bz2", ".xz", ".iso", ".dmg", ".cab"],
+    "Archives": [".zip", ".rar", ".7z", ".tar", ".gz", ".bz2", ".xz", ".iso", ".dmg", ".cab"],
     "Executables": [".exe", ".msi", ".bat", ".cmd", ".sh", ".jar", ".app", ".apk"],
     "Fonts": [".ttf", ".otf", ".woff", ".woff2", ".fnt"],
-    "Scripts & Code": [".py", ".js", ".ts", ".java", ".c", ".cpp", ".cs", ".rb", ".php", ".html", ".css", ".json", ".xml", ".sql", ".sh", ".pl", ".go", ".rs", ".swift", ".kt"],
-    "Disk Images": [".iso", ".img", ".bin", ".cue", ".mdf", ".mds"],
-    "3D Models": [".obj", ".fbx", ".stl", ".dae", ".3ds", ".blend", ".ply"],
+    "Scripts_and_Code": [".py", ".js", ".ts", ".java", ".c", ".cpp", ".cs", ".rb", ".php", ".html", ".css", ".json", ".xml", ".sql", ".sh", ".pl", ".go", ".rs", ".swift", ".kt"],
+    "Disk_Images": [".iso", ".img", ".bin", ".cue", ".mdf", ".mds"],
+    "3D_Models": [".obj", ".fbx", ".stl", ".dae", ".3ds", ".blend", ".ply"],
     "Others": [".bak", ".tmp", ".log", ".dat", ".cfg", ".ini"]
 }
 
@@ -48,7 +49,7 @@ def get_file_category(file_path: Path) -> str:
     return "Others"
 
 def get_subfolder_name(file_path: Path, category: str) -> str:
-    """Returns the subfolder name based on year or extension."""
+    """Returns the subfolder based on year or extension."""
     if category in ["Images", "Videos"]:
         try:
             timestamp = file_path.stat().st_mtime
@@ -56,7 +57,7 @@ def get_subfolder_name(file_path: Path, category: str) -> str:
             return f"{year}"
         except Exception:
             return "UnknownYear"
-    elif category in ["Documents","Compressed","Executables","Fonts","Scripts & Code","Disk Images","3D Models","Others"]:
+    elif category in ["Documents","Archives","Executables","Fonts","Scripts_and_Code","Disk_Images","3D_Models","Others"]:
         return file_path.suffix.lower().lstrip(".")
     else:
         return "Unknown"
@@ -91,25 +92,25 @@ def organize_files(
     report_file: Path = None
 ):
     """
-    Organizes files from the source directory to the destination.
+    Organizes files from the source directory into the destination.
     """
     files_to_process = []
 
-    # 1️⃣ Recursively traverse the source directory
+    # 1️⃣ Recursively walk through source directory
     for root, dirs, files in os.walk(source_dir):
         # Ignore the destination folder itself
         dirs[:] = [d for d in dirs if Path(root, d) != dest_dir]
         for file in files:
             files_to_process.append(Path(root) / file)
 
-    # 2️⃣ Prepare count summary
+    # 2️⃣ Prepare summary counts
     summary = {}
     for file_path in files_to_process:
         category = get_file_category(file_path)
         summary.setdefault(category, 0)
         summary[category] += 1
 
-    # 3️⃣ Show summary to user
+    # 3️⃣ Show summary to the user
     print("\nSummary of files found by category:")
     for cat, count in summary.items():
         print(f"- {cat}: {count}")
@@ -118,7 +119,7 @@ def organize_files(
     # 4️⃣ Confirm execution
     proceed = input("Do you want to continue? (y/n): ").lower()
     if proceed != "y":
-        print("Operation cancelled by user.")
+        print("Operation canceled by user.")
         return
 
     # 5️⃣ Process files with progress bar
@@ -130,7 +131,7 @@ def organize_files(
         target_path = target_dir / file_path.name
 
         if dry_run:
-            # Just simulation
+            # Simulation only
             processed_files.append({
                 "source": str(file_path),
                 "destination": str(target_path),
@@ -146,7 +147,7 @@ def organize_files(
                 "action": "MOVE" if move else "COPY"
             })
 
-    # 6️⃣ Optional report
+    # 6️⃣ Optional report generation
     if report_file:
         try:
             with open(report_file, "w", newline="", encoding="utf-8") as csvfile:
@@ -155,11 +156,12 @@ def organize_files(
                 writer.writeheader()
                 for row in processed_files:
                     writer.writerow(row)
-            print(f"Report saved at: {report_file}")
+            print(f"Report saved to: {report_file}")
         except Exception as e:
             print(f"[ERROR] Could not generate report: {e}")
 
     print("\nOrganization completed!")
+    print(f"Total execution time: {time.perf_counter() - start_time:.2f} seconds")
 
 # ----------------------------
 # ARGPARSE EXECUTION
@@ -197,6 +199,7 @@ def parse_args():
 
 if __name__ == "__main__":
     args = parse_args()
+    start_time = time.perf_counter()
     organize_files(
         source_dir=args.source.resolve(),
         dest_dir=args.destination.resolve(),

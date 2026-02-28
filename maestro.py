@@ -17,6 +17,7 @@ from tqdm import tqdm
 from datetime import datetime
 import argparse
 import csv
+import time
 
 # ----------------------------
 # CONFIGURAÇÃO DE CATEGORIAS
@@ -160,6 +161,7 @@ def organize_files(
             print(f"[ERRO] Não foi possível gerar relatório: {e}")
 
     print("\nOrganização concluída!")
+    print(f"Tempo total de execução: {time.perf_counter() - start_time:.2f} segundos")
 
 # ----------------------------
 # EXECUÇÃO VIA ARGPARSE
@@ -197,6 +199,7 @@ def parse_args():
 
 if __name__ == "__main__":
     args = parse_args()
+    start_time = time.perf_counter()
     organize_files(
         source_dir=args.origem.resolve(),
         dest_dir=args.destino.resolve(),

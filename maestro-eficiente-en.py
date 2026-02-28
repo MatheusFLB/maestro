@@ -3,7 +3,7 @@
 Minimalist and efficient File Organizer.
 """
 
-import os, shutil, csv, argparse
+import os, shutil, csv, argparse, time
 from pathlib import Path
 from tqdm import tqdm
 from datetime import datetime
@@ -13,12 +13,12 @@ from datetime import datetime
     "Videos": [".mp4", ".mov", ".avi", ".mkv", ".flv", ".wmv", ".webm", ".mpeg", ".mpg", ".3gp", ".m4v", ".vob"],
     "Music": [".mp3", ".flac", ".wav", ".aac", ".ogg", ".wma", ".m4a", ".alac", ".aiff", ".opus"],
     "Documents": [".pdf", ".docx", ".doc", ".xlsx", ".xls", ".pptx", ".ppt", ".txt", ".odt", ".ods", ".odp", ".rtf", ".tex", ".csv", ".md", ".log"],
-    "Archives": [".zip", ".rar", ".7z", ".tar", ".gz", ".bz2", ".xz", ".iso", ".dmg", ".cab"],
+    "Compressed": [".zip", ".rar", ".7z", ".tar", ".gz", ".bz2", ".xz", ".iso", ".dmg", ".cab"],
     "Executables": [".exe", ".msi", ".bat", ".cmd", ".sh", ".jar", ".app", ".apk"],
     "Fonts": [".ttf", ".otf", ".woff", ".woff2", ".fnt"],
-    "Scripts_and_Code": [".py", ".js", ".ts", ".java", ".c", ".cpp", ".cs", ".rb", ".php", ".html", ".css", ".json", ".xml", ".sql", ".sh", ".pl", ".go", ".rs", ".swift", ".kt"],
-    "Disk_Images": [".iso", ".img", ".bin", ".cue", ".mdf", ".mds"],
-    "3D_Models": [".obj", ".fbx", ".stl", ".dae", ".3ds", ".blend", ".ply"],
+    "Scripts and Code": [".py", ".js", ".ts", ".java", ".c", ".cpp", ".cs", ".rb", ".php", ".html", ".css", ".json", ".xml", ".sql", ".sh", ".pl", ".go", ".rs", ".swift", ".kt"],
+    "Disk Images": [".iso", ".img", ".bin", ".cue", ".mdf", ".mds"],
+    "3D Models": [".obj", ".fbx", ".stl", ".dae", ".3ds", ".blend", ".ply"],
     "Others": [".bak", ".tmp", ".log", ".dat", ".cfg", ".ini"]
 }
 
@@ -36,7 +36,7 @@ def 子(a: Path, c: str) -> str:
         except: return "Year?"
     return a.suffix.lower().lstrip(".")
 
-# move or copy file without overwriting
+# moves or copies file without overwriting
 def 动(a: Path, b: Path, c=True):
     b.parent.mkdir(parents=True, exist_ok=True)
     d = 1; e = b
@@ -55,8 +55,11 @@ def 文(a: Path, b: Path, c=True, d=False, e: Path=None):
     for l in f:
         m=路(l); k.setdefault(m,0); k[m]+=1
 
-    print("Summary:", {m:k[m] for m in k}, "Total:",len(f))
-    if input("Continue? (y/n): ").lower()!="y": return
+    print("\nSummary:")
+    print("\n".join(f"- {c}: {n}" for c, n in k.items()))
+    print(f"Total: {len(f)} files")
+    if input("\nContinue? (y/n): ").lower() != "y":
+        return
 
     p=[]
     for l in tqdm(f,desc="Organizing",unit="file"):
@@ -70,6 +73,8 @@ def 文(a: Path, b: Path, c=True, d=False, e: Path=None):
             w=csv.DictWriter(f_csv,fieldnames=["orig","dst","ac"]); w.writeheader()
             [w.writerow(u) for u in p]
 
+    print(f"Total execution time: {time.perf_counter() - 始:.2f} seconds")
+
 # minimalist parser
 def 参():
     p=argparse.ArgumentParser(); 
@@ -82,4 +87,5 @@ def 参():
 
 if __name__=="__main__":
     a=参()
+    始 = time.perf_counter()
     文(a.origin.resolve(), a.destination.resolve(), c=not a.copy, d=a.dry_run, e=a.report.resolve() if a.report else None)

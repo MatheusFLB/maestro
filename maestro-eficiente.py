@@ -3,7 +3,7 @@
 Organizador de Arquivos minimalista e eficiente.
 """
 
-import os, shutil, csv, argparse
+import os, shutil, csv, argparse, time
 from pathlib import Path
 from tqdm import tqdm
 from datetime import datetime
@@ -55,8 +55,11 @@ def 文(a: Path, b: Path, c=True, d=False, e: Path=None):
     for l in f:
         m=路(l); k.setdefault(m,0); k[m]+=1
 
-    print("Resumo:", {m:k[m] for m in k}, "Total:",len(f))
-    if input("Continuar? (s/n): ").lower()!="s": return
+    print("\nResumo:")
+    print("\n".join(f"- {c}: {n}" for c, n in k.items()))
+    print(f"Total: {len(f)} arquivos")
+    if input("\nContinuar? (s/n): ").lower() != "s":
+        return
 
     p=[]
     for l in tqdm(f,desc="Organizando",unit="arq"):
@@ -70,6 +73,8 @@ def 文(a: Path, b: Path, c=True, d=False, e: Path=None):
             w=csv.DictWriter(f_csv,fieldnames=["orig","dst","ac"]); w.writeheader()
             [w.writerow(u) for u in p]
 
+    print(f"Tempo total de execução: {time.perf_counter() - 始:.2f} segundos")
+
 # parser minimalista
 def 参():
     p=argparse.ArgumentParser(); 
@@ -82,4 +87,5 @@ def 参():
 
 if __name__=="__main__":
     a=参()
+    始 = time.perf_counter()
     文(a.origem.resolve(), a.destino.resolve(), c=not a.copia, d=a.dry_run, e=a.report.resolve() if a.report else None)
